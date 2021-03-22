@@ -40,7 +40,7 @@ chars = code.split(",")
 
 img = f"const uint8_t {name.lower()}_icon{len(cropped_lines)}x{cols * 8} [] PROGMEM = {{"
 for col in range(cols - 1, -1, -1):
-    img += "\n    "
+    img += "\n  "
     for i in range(0, len(chars), cols):
         img += f"{chars[col + i].strip()},"
 img += "\n};"

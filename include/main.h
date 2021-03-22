@@ -4,9 +4,9 @@
 #include <Arduino.h>
 
 enum class State {
-	MENU     = 1 << 0,
-	EDIT     = 1 << 1,
-	GRINDING = 1 << 2
+  MENU     = 1 << 0,
+  EDIT     = 1 << 1,
+  GRINDING = 1 << 2
 };
 
 State state = State::MENU;
