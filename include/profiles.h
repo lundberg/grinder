@@ -12,6 +12,7 @@
 
 #define MAX_PROFILE_COUNT 9
 #define PROFILE_TYPE_COUNT 3
+#define PROFILE_ICON_COUNT 3
 
 #define MIN_TIMER 1000
 #define MAX_TIMER 30000
@@ -30,7 +31,7 @@ const Icon NO_ICON = {NULL};
 
 struct {
   const char *label;
-  const Icon icons[3];
+  const Icon icons[PROFILE_ICON_COUNT];
 } const PROFILE_TYPES[PROFILE_TYPE_COUNT] = {
   {
     .label="Moka Pot",
@@ -120,12 +121,8 @@ struct Profile {
       return;
     }
     // Find max icon index for current profile
-    int8_t max;
-    for (max = -1; max < 2; max++) {
-      if (PROFILE_TYPES[_type].icons[max+1].data == NULL) {
-        break;
-      }
-    }
+    int8_t max = -1;
+    for (; max < PROFILE_ICON_COUNT - 1 && PROFILE_TYPES[_type].icons[max+1].data != NULL; max++) {}
     _icon = limit(_icon + delta, OFF, max);
   }
 };
