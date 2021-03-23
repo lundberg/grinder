@@ -44,6 +44,7 @@ void setup() {
 
   // Initialize screen
   oled.begin();
+  oled.setFont(FONT8X16);
   oled.switchRenderFrame();
   oled.clear();
   drawProfile();
@@ -55,21 +56,26 @@ void loop() {
 
   // Handle start button click
   if (startButton.read() == Button::Event::DOWN) {
-    if (Profiles.current->isEmpty()) {
-      // Go to manual profile if started on empty profile
-      Profiles.setProfile(MANUAL_MODE);
-      drawProfile();
-    }
-    saveAndExitEditMode();
-
     if (state == State::GRINDING) {
       // Abort
-      drawProfile(true);
+      abortCountdown();
       state = State::MENU;
+
     } else if (Profiles.current->timer()) {
-      // Start grinding timer
+      // Start profile grinding timer
+      Profiles.save();
       startCountdown();
       state = State::GRINDING;
+
+    } else if (Profiles.current->isManual()) {
+      // Manual mode -> Just remember it
+      Profiles.save();
+
+    } else if (Profiles.current->isEmpty()) {
+      // Started on "empty" profile -> Go to manual mode
+      Profiles.setProfile(MANUAL_MODE);
+      Profiles.save();
+      drawProfile();
     }
   }
 
@@ -78,7 +84,10 @@ void loop() {
     case State::MENU:
       menuHandler();
       break;
-    case State::EDIT:
+    case State::EDIT_PROFILE_TYPE:
+    case State::EDIT_PROFILE_TIMER_S:
+    case State::EDIT_PROFILE_TIMER_MS:
+    case State::EDIT_PROFILE_ICON:
       editProfileHandler();
       break;
     case State::GRINDING:
@@ -93,16 +102,14 @@ void menuHandler() {
   // Handle menu button long hold
   if (menuButton.read() == Button::Event::LONG_HOLD && !Profiles.current->isManual()) {
     // Edit profile
-    state = State::EDIT;
-    edit = 1;
+    state = State::EDIT_PROFILE_TYPE;
     drawProfile();
   }
 
   // Handle rotary encoder
   RotaryEncoder::Direction direction = encoder.getDirection();
   if (direction != RotaryEncoder::Direction::NOROTATION) {
-    int8_t delta = direction == RotaryEncoder::Direction::CLOCKWISE ? 1 : -1;
-    Profiles.changeProfile(delta);
+    Profiles.changeProfile((int8_t)direction);
     drawProfile();
   }
 }
@@ -114,47 +121,39 @@ void editProfileHandler() {
   Button::Event event = menuButton.read();
   if (event == Button::Event::CLICK && !Profiles.current->isEmpty()) {
     // Cycle profile edit field
-    edit++;
-    if (edit > 4) {
-      edit = 1;
+    state = (State)((int8_t)state << 1);
+    if (state > State::EDIT_PROFILE_ICON) {
+      state = State::EDIT_PROFILE_TYPE;
     }
     drawProfile();
     
   } else if (event == Button::Event::LONG_HOLD) {
     // Save profile and go back to menu
-    saveAndExitEditMode();
+    Profiles.save();
+    state = State::MENU;
     drawProfile();
   }
 
   // Handle rotary encoder
   RotaryEncoder::Direction direction = encoder.getDirection();
   if (direction != RotaryEncoder::Direction::NOROTATION) {
-    int8_t delta = direction == RotaryEncoder::Direction::CLOCKWISE ? 1 : -1;
-    if (edit == 1) {
-      Profiles.current->changeType(delta);
-    } else if (edit == 2) {
-      Profiles.current->changeTimer(1000 * delta);
-    } else if (edit == 3) {
-      Profiles.current->changeTimer(100 * delta);
-    } else if (edit == 4) {
-      Profiles.current->changeIcon(delta);
+    if (state == State::EDIT_PROFILE_TYPE) {
+      Profiles.current->changeType((int8_t)direction);
+    } else if (state == State::EDIT_PROFILE_TIMER_S) {
+      Profiles.current->changeTimer(1000 * (int8_t)direction);
+    } else if (state == State::EDIT_PROFILE_TIMER_MS) {
+      Profiles.current->changeTimer(100 * (int8_t)direction);
+    } else if (state == State::EDIT_PROFILE_ICON) {
+      Profiles.current->changeIcon((int8_t)direction);
     }
     drawProfile();
   }
 }
 
-void drawProfile(bool preClear) {
+void drawProfile() {
   Profile* current = Profiles.current;
 
-  if (preClear) {
-    oled.switchRenderFrame();
-    oled.invertOutput(false);
-    oled.clear();
-  }
-  oled.invertOutput(false);
-  oled.setFont(FONT8X16);
-
-  // Profile Label
+  // Profile/Manual Label
   if (current->isManual()) {
     // Manual
     oled.setCursor(0, 1);
@@ -162,8 +161,8 @@ void drawProfile(bool preClear) {
     // Profile
     oled.setCursor(0, 0);
     oled.print(Profiles.data.current + 1); oled.print('.');
-    oled.invertOutput(edit == 1);
   }
+  oled.invertOutput(state == State::EDIT_PROFILE_TYPE);
   oled.print(current->label());
 
   // Profile Timer
@@ -176,19 +175,19 @@ void drawProfile(bool preClear) {
     int8_t s = (int8_t) (timer / 1000);
     int8_t ms = (int8_t) ((timer - s * 1000) / 100);
     oled.setCursor(2 * 8, 2);
-    oled.invertOutput(edit == 2);
+    oled.invertOutput(state == State::EDIT_PROFILE_TIMER_S);
     oled.print(s);
     oled.invertOutput(false);
     oled.print('.');
-    oled.invertOutput(edit == 3);
+    oled.invertOutput(state == State::EDIT_PROFILE_TIMER_MS);
     oled.print(ms);
     oled.invertOutput(false);
     oled.print(F(" sec"));
   }
 
   // Profile Icon
-  if (edit == 4) {
-    // Empty filled square in edit mode
+  if (state == State::EDIT_PROFILE_ICON) {
+    // Draw filled square to make edited icons same width
     oled.invertOutput(true);
     for (uint8_t i = 0; i < 4; i++) {
       oled.setCursor(102, i);
@@ -211,6 +210,12 @@ void startCountdown() {
   stopTime = millis() + Profiles.current->timer();
 }
 
+void abortCountdown() {
+  oled.switchRenderFrame();
+  oled.clear();
+  drawProfile();
+}
+
 void grindingHandler() {
   int32_t countdown = stopTime - millis();
 
@@ -229,8 +234,10 @@ void grindingHandler() {
     pinMode(START_PIN, OUTPUT);
     digitalWrite(START_PIN, LOW);
     
+    // Clear any last progress bar
     oled.setCursor(0, 2);
-    oled.clearToEOL();
+    oled.fillLength(0x00, 8);
+    // Show "done" screen
     oled.switchRenderFrame();
     oled.clear();
     oled.setCursor(44, 1);
@@ -239,20 +246,12 @@ void grindingHandler() {
     oled.clear();
     delay(1000);
 
-    // Release start button
+    // Simulate release of start button
     digitalWrite(START_PIN, HIGH);
     pinMode(START_PIN, INPUT_PULLUP);
     
     // Go back to profile menu
     state = State::MENU;
     drawProfile();
-  }
-}
-
-void saveAndExitEditMode() {
-  Profiles.save();
-  if (state == State::EDIT) {
-    state = State::MENU;
-    edit = 0;
   }
 }
