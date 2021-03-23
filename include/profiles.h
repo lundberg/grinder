@@ -41,7 +41,7 @@ struct {
     }
   },
   {
-    .label="French Press",
+    .label="Fr Press",
     .icons={
       {bodum_icon21x32, 21, 2, 0},
       {NULL},
