@@ -96,12 +96,15 @@ struct Profile {
   }
 
   void changeType(int8_t delta) {
-    _type = limit(_type + delta, OFF, PROFILE_TYPE_COUNT - 1);
-    _icon = 0;
-    if (isEmpty()) {
-      _timer = 0;
-    } else if (_timer < MIN_TIMER) {
-      _timer = MIN_TIMER;
+    int8_t next = limit(_type + delta, OFF, PROFILE_TYPE_COUNT - 1);
+    if (next != _type) {
+      _type = next;
+      _icon = 0;
+      if (isEmpty()) {
+        _timer = 0;
+      } else if (_timer < MIN_TIMER) {
+        _timer = MIN_TIMER;
+      }
     }
   }
 
