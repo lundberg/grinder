@@ -19,43 +19,21 @@
 
 int16_t limit(int16_t number, int16_t min, int16_t max);
 
-struct Icon {
-  const uint8_t* data;
-  const uint8_t width;
-  const uint8_t offset;
-  const uint8_t page;
-};
-
-const Icon MANUAL_ICON = {manual_icon30x32, 30, 0, 0};
-const Icon NO_ICON = {NULL};
-
 struct {
   const char *label;
   const Icon icons[PROFILE_ICON_COUNT];
 } const PROFILE_TYPES[PROFILE_TYPE_COUNT] = {
   {
     .label="Moka Pot",
-    .icons={	
-      {bialetti_icon26x32, 26, 0, 0},
-      {alessi_icon21x32, 21, 4, 0},
-      {vev_vigano_icon21x32, 21, 2, 0},
-    }
+    .icons={BIALETTI_ICON, ALESSI_ICON, VEV_VIGANO_ICON}
   },
   {
     .label="Fr Press",
-    .icons={
-      {bodum_icon21x32, 21, 2, 0},
-      {NULL},
-      {NULL},
-    }
+    .icons={BODUM_ICON, NO_ICON, NO_ICON}
   },
   {
     .label="Pour Over",
-    .icons={
-      {chemex_icon23x32, 23, 1, 0},
-      {v60_icon25x24, 25, 0, 1},
-      {NULL},
-    }
+    .icons={CHEMEX_ICON, V60_ICON, NO_ICON}
   },
 };
 

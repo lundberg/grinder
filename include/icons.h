@@ -56,4 +56,21 @@ const uint8_t vev_vigano_icon21x32 [] PROGMEM = {
   0b00100000,0b00110000,0b00101111,0b00101000,0b00101000,0b00101000,0b00101000,0b00100000,0b00100000,0b00100000,0b00100000,0b00100000,0b00100000,0b00101000,0b00101111,0b00110000,0b00100000,0b00000000,0b00000000,0b00000000,0b00000000,
 };
 
+struct Icon {
+  const uint8_t* data;
+  const uint8_t width;
+  const uint8_t offset;
+  const uint8_t page;
+};
+
+const Icon NO_ICON = {.data=NULL};
+const Icon MANUAL_ICON = {.data=manual_icon30x32, .width=30, .offset=0, .page=0};
+
+const Icon BIALETTI_ICON = {.data=bialetti_icon26x32, .width=26, .offset=0, .page=0};
+const Icon ALESSI_ICON = {.data=alessi_icon21x32, .width=21, .offset=4, .page=0};
+const Icon VEV_VIGANO_ICON = {.data=vev_vigano_icon21x32, .width=21, .offset=2, .page=0};
+const Icon BODUM_ICON = {.data=bodum_icon21x32, .width=21, .offset=2, .page=0};
+const Icon CHEMEX_ICON = {.data=chemex_icon23x32, .width=23, .offset=1, .page=0};
+const Icon V60_ICON = {.data=v60_icon25x24, .width=25, .offset=0, .page=1};
+
 #endif
