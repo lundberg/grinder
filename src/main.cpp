@@ -44,6 +44,8 @@ void setup() {
 
   // Initialize screen
   oled.begin();
+  oled.setInternalIref(true);
+  oled.setContrast(0xFF);
   oled.setFont(FONT8X16);
   oled.switchRenderFrame();
   oled.clear();
