@@ -32,14 +32,14 @@ public:
 private:
   uint8_t pin;
   int16_t analogThreshold;
-  uint8_t state = BUTTON_DIGITAL_UP;
+  uint16_t holdDuration = 1000;
 
   Event events;
-  Event event = Event::NONE;
-  Event lastEvent = Event::NONE;
+  volatile Event event = Event::NONE;
+  volatile Event lastEvent = Event::NONE;
 
-  uint16_t holdDuration = 1500;
-  uint32_t startTime = 0;
+  volatile uint8_t state = BUTTON_DIGITAL_UP;
+  volatile uint32_t startTime = 0;
 
   uint8_t readState();
 };

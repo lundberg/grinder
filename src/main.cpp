@@ -18,6 +18,7 @@ RotaryEncoder encoder(PB3, PB4, RotaryEncoder::LatchMode::FOUR3);
 
 ISR(PCINT0_vect) {
   // Interrupt handler for rotary encoder
+  startButton.tick();
   if (state != State::GRINDING) {
     encoder.tick();
   }
@@ -26,8 +27,9 @@ ISR(PCINT0_vect) {
 void setup() {
   // Attach Rotary Encoder Iterrupts
   cli();                   // Disable interrupts during setup
-  PCMSK |= (1 << PCINT3);  // Enable interrupt handler (ISR) for pin 3
-  PCMSK |= (1 << PCINT4);  // Enable interrupt handler (ISR) for pin 4
+  PCMSK |= (1 << PCINT1);  // Enable interrupt handler (ISR) for pin 1 (start button)
+  PCMSK |= (1 << PCINT3);  // Enable interrupt handler (ISR) for pin 3 (encoder A)
+  PCMSK |= (1 << PCINT4);  // Enable interrupt handler (ISR) for pin 4 (encoder B)
   GIMSK |= (1 << PCIE);    // Enable PCINT interrupt in the general interrupt mask
   sei(); 
 
@@ -54,9 +56,7 @@ void setup() {
 }
 
 void loop() {
-  startButton.tick();
-
-  // Handle start button click
+  // Handle start button
   if (startButton.read() == Button::Event::DOWN) {
     if (state == State::GRINDING) {
       // Abort
