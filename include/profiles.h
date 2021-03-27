@@ -7,12 +7,15 @@
 #include <icons.h>
 
 #define OFF -1
-#define MANUAL_MODE -1
-#define MANUAL_TYPE -2
+#define NONE 0
+#define EMPTY 0
 
 #define MAX_PROFILE_COUNT 9
 #define PROFILE_TYPE_COUNT 3
+
 #define PROFILE_ICON_COUNT 3
+#define PROFILE_ICON_MAX_WIDTH 26
+#define PROFILE_ICON_X (128 - PROFILE_ICON_MAX_WIDTH)
 
 #define MIN_TIMER 1000
 #define MAX_TIMER 30000
@@ -22,7 +25,11 @@ int16_t limit(int16_t number, int16_t min, int16_t max);
 struct {
   const char *label;
   const Icon icons[PROFILE_ICON_COUNT];
-} const PROFILE_TYPES[PROFILE_TYPE_COUNT] = {
+} const PROFILE_TYPES[PROFILE_TYPE_COUNT + 1] = {
+  {
+    .label="- Empty -",
+    .icons={NO_ICON, NO_ICON, NO_ICON}
+  },
   {
     .label="Moka Pot",
     .icons={BIALETTI_ICON, ALESSI_ICON, VEV_VIGANO_ICON}
@@ -42,40 +49,24 @@ struct Profile {
   int16_t _timer;
   int8_t _icon;
 
-  bool isManual() {
-    return _type == MANUAL_TYPE;
-  }
-
   bool isEmpty() {
-    return _type == OFF;
+    return _type == EMPTY;
   }
 
   const char* label() {
-    if (isManual()) {
-      return "Manual";
-    } else if (isEmpty()) {
-      return "- Empty -";
-    } else {
-      return PROFILE_TYPES[_type].label;
-    }
+    return PROFILE_TYPES[_type].label;
   }
 
   uint16_t timer() {
-    return isManual() || isEmpty() ? 0 : _timer;
+    return isEmpty() ? 0 : _timer;
   }
 
   const Icon& icon() {
-    if (isManual()) {
-      return MANUAL_ICON;
-    } else if (isEmpty() || _icon == OFF) {
-      return NO_ICON;
-    } else {
-      return PROFILE_TYPES[_type].icons[_icon];
-    }
+    return _icon == OFF ? NO_ICON : PROFILE_TYPES[_type].icons[_icon];
   }
 
   void changeType(int8_t delta) {
-    int8_t next = limit(_type + delta, OFF, PROFILE_TYPE_COUNT - 1);
+    int8_t next = limit(_type + delta, EMPTY, PROFILE_TYPE_COUNT);
     if (next != _type) {
       _type = next;
       _icon = 0;
@@ -88,66 +79,57 @@ struct Profile {
   }
 
   void changeTimer(int16_t delta) {
-    if (isManual() || isEmpty()) {
-      return;
-    }
     _timer = limit(_timer + delta, MIN_TIMER, MAX_TIMER);
   }
 
   void changeIcon(int8_t delta) {
-    if (isManual() || isEmpty()) {
-      return;
-    }
-    // Find max icon index for current profile
+    // Find max icon index for current profile type
     int8_t max = -1;
     for (; max < PROFILE_ICON_COUNT - 1 && PROFILE_TYPES[_type].icons[max+1].data != NULL; max++) {}
     _icon = limit(_icon + delta, OFF, max);
   }
 };
 
-Profile manual = {MANUAL_TYPE, 0, 0};
-
 struct ProfilesClass {
-
   struct Data {
-    int8_t current;
+    int8_t profile;
     Profile profiles[MAX_PROFILE_COUNT];
   } data;
 
-  struct Profile *current = &manual;
+  struct Profile *current = NULL;
 
   void load() {
     EEPROM.get(0, data);
-    current = &getCurrentProfile();
+    current = getCurrentProfile();
 
-    if (data.current == UINT8_MAX) {
+    if (data.profile == UINT8_MAX) {
       this->reset();
     }
   }
 
-  void reset() {
-    setProfile(MANUAL_MODE);
-    for (uint8_t i = 0; i < MAX_PROFILE_COUNT; i++) {
-      data.profiles[i] = {OFF, 0, OFF};
-    }
-    save();
-  }
-  
   void save() {
     EEPROM.put(0, data);
   }
 
-  Profile& getCurrentProfile() {
-    return data.current == MANUAL_MODE ? manual : data.profiles[data.current];
+  void reset() {
+    setProfile(NONE);
+    for (uint8_t i = 0; i < MAX_PROFILE_COUNT; i++) {
+      data.profiles[i] = {EMPTY, 0, OFF};
+    }
+    save();
+  }
+
+  Profile* getCurrentProfile() {
+    return data.profile == NONE ? NULL : &(data.profiles[data.profile - 1]);
   }
 
   void setProfile(int8_t i) {
-    data.current = i;
-    current = &getCurrentProfile();
+    data.profile = i;
+    current = getCurrentProfile();
   }
   
   void changeProfile(int8_t delta) {
-    setProfile(limit(data.current + delta, OFF, MAX_PROFILE_COUNT - 1));
+    setProfile(limit(data.profile + delta, NONE, MAX_PROFILE_COUNT));
   }
 };
 

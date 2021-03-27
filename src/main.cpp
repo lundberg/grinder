@@ -43,15 +43,17 @@ void setup() {
   } else {
     Profiles.load();
   }
+  state = Profiles.current ? State::PROFILE : State::MANUAL;
 
   // Initialize screen
   oled.begin();
+  oled.setDisplayClock(1, 15);
   oled.setInternalIref(true);
   oled.setContrast(0xFF);
   oled.setFont(FONT8X16);
   oled.switchRenderFrame();
   oled.clear();
-  drawProfile();
+  drawMenu();
   oled.on();
 }
 
@@ -61,184 +63,258 @@ void loop() {
     if (state == State::GRINDING) {
       // Abort
       abortCountdown();
-      state = State::MENU;
+      state = State::PROFILE;
 
-    } else if (Profiles.current->timer()) {
-      // Start profile grinding timer
-      Profiles.save();
-      startCountdown();
-      state = State::GRINDING;
-
-    } else if (Profiles.current->isManual()) {
-      // Manual mode -> Just remember it
+    } else if (state == State::MANUAL) {
+      // Started in manual mode -> Just remember it
       Profiles.save();
 
-    } else if (Profiles.current->isEmpty()) {
-      // Started on "empty" profile -> Go to manual mode
-      Profiles.setProfile(MANUAL_MODE);
+    } else {
+      if (Profiles.current->timer()) {
+        // Start profile grinding timer
+        startCountdown();
+        state = State::GRINDING;
+
+      } else {
+        // Started on "empty" profile -> Go to manual mode
+        Profiles.setProfile(NONE);
+        state = State::MANUAL;
+        drawMenu();
+      }
+
       Profiles.save();
-      drawProfile();
     }
   }
 
-  switch (state) {
-    default:
-    case State::MENU:
-      menuHandler();
-      break;
-    case State::EDIT_PROFILE_TYPE:
-    case State::EDIT_PROFILE_TIMER_S:
-    case State::EDIT_PROFILE_TIMER_MS:
-    case State::EDIT_PROFILE_ICON:
-      editProfileHandler();
-      break;
-    case State::GRINDING:
-      grindingHandler();
-      break;
+  // Dispatch state handlers
+  if ((State::MENU & state) == state) {
+    // Menu
+    menuHandler();
+    if (state == State::PROFILE) {
+      profileHandler();
+    }
+
+  } else if ((State::EDIT & state) == state) {
+    // Edit
+    editHandler();
+
+  } else if (state == State::GRINDING) {
+    // Grinding
+    grindingHandler();
   }
 }
 
 void menuHandler() {
-  menuButton.tick();
-
-  // Handle menu button long hold
-  if (menuButton.read() == Button::Event::LONG_HOLD && !Profiles.current->isManual()) {
-    // Edit profile
-    state = State::EDIT_PROFILE_TYPE;
-    drawProfile();
-  }
-
-  // Handle rotary encoder
+  // Handle rotary encoder -> Navigate menu
   RotaryEncoder::Direction direction = encoder.getDirection();
   if (direction != RotaryEncoder::Direction::NOROTATION) {
     Profiles.changeProfile((int8_t)direction);
-    drawProfile();
+    state = Profiles.current ? State::PROFILE : State::MANUAL;
+    drawMenu();
   }
 }
 
-void editProfileHandler() {
+void profileHandler() {
+  menuButton.tick();
+  
+  if (menuButton.read() == Button::Event::LONG_HOLD) {
+    // Edit profile
+    state = State::EDIT_PROFILE_TYPE;
+    drawMenu();
+  }
+}
+
+void editHandler() {
   menuButton.tick();
 
   // Handle menu button click
   Button::Event event = menuButton.read();
   if (event == Button::Event::CLICK && !Profiles.current->isEmpty()) {
-    // Cycle profile edit field
+    // Ensure we're on the right render buffer
+    if (state != State::EDIT_PROFILE_TYPE) {
+      oled.switchRenderFrame();
+    }
+
+    // Cycle profile field to edit
     state = (State)((int8_t)state << 1);
     if (state > State::EDIT_PROFILE_ICON) {
       state = State::EDIT_PROFILE_TYPE;
     }
-    drawProfile();
+
+    drawMenu();
+
+    // Render timer and icon fields fast direct on display buffer
+    if (state != State::EDIT_PROFILE_TYPE) {
+      oled.switchRenderFrame();
+    }
     
   } else if (event == Button::Event::LONG_HOLD) {
     // Save profile and go back to menu
     Profiles.save();
-    state = State::MENU;
-    drawProfile();
+
+    // Ensure we're on the right render buffer
+    if (state != State::EDIT_PROFILE_TYPE) {
+      oled.switchRenderFrame();
+    }
+
+    state = State::PROFILE;
+    drawMenu();
   }
 
-  // Handle rotary encoder
+  // Handle rotary encoder -> Change current field value
   RotaryEncoder::Direction direction = encoder.getDirection();
   if (direction != RotaryEncoder::Direction::NOROTATION) {
     if (state == State::EDIT_PROFILE_TYPE) {
       Profiles.current->changeType((int8_t)direction);
+      drawMenu();
     } else if (state == State::EDIT_PROFILE_TIMER_S) {
       Profiles.current->changeTimer(1000 * (int8_t)direction);
+      renderProfileTimer();
     } else if (state == State::EDIT_PROFILE_TIMER_MS) {
       Profiles.current->changeTimer(100 * (int8_t)direction);
+      renderProfileTimer();
     } else if (state == State::EDIT_PROFILE_ICON) {
       Profiles.current->changeIcon((int8_t)direction);
+      renderProfileIcon();
     }
-    drawProfile();
   }
 }
 
-void drawProfile() {
-  Profile* current = Profiles.current;
-
-  // Profile/Manual Label
-  if (current->isManual()) {
+void drawMenu() {
+  if (state == State::MANUAL) {
     // Manual
+    oled.clear();
     oled.setCursor(0, 1);
+    oled.print("Manual");
+    oled.bitmap(
+      128 - MANUAL_ICON.width - MANUAL_ICON.offset,
+      MANUAL_ICON.page,
+      128 - MANUAL_ICON.offset,
+      4, MANUAL_ICON.data
+    );
+
   } else {
-    // Profile
+    // Profile number
     oled.setCursor(0, 0);
-    oled.print(Profiles.data.current + 1); oled.print('.');
-  }
-  oled.invertOutput(state == State::EDIT_PROFILE_TYPE);
-  oled.print(current->label());
+    oled.invertOutput(false);
+    oled.print(Profiles.data.profile); oled.print('.');
+    
+    // Profile type / label
+    oled.invertOutput(state == State::EDIT_PROFILE_TYPE);
+    oled.print(Profiles.current->label());
+    
+    // Timer
+    if (!Profiles.current->isEmpty()) {
+      oled.invertOutput(false);
+      oled.bitmap(0, 2, 13, 4, timer_icon13x16);
+    } 
+    renderProfileTimer();
 
-  // Profile Timer
-  if (auto timer = current->timer()) {
     // Icon
-    oled.invertOutput(false);
-    oled.bitmap(0, 2, 13, 4, timer_icon13x16);
-
-    // Seconds
-    int8_t s = (int8_t) (timer / 1000);
-    int8_t ms = (int8_t) ((timer - s * 1000) / 100);
-    oled.setCursor(2 * 8, 2);
-    oled.invertOutput(state == State::EDIT_PROFILE_TIMER_S);
-    oled.print(s);
-    oled.invertOutput(false);
-    oled.print('.');
-    oled.invertOutput(state == State::EDIT_PROFILE_TIMER_MS);
-    oled.print(ms);
-    oled.invertOutput(false);
-    oled.print(F(" sec"));
+    renderProfileIcon();
   }
 
-  // Profile Icon
-  if (state == State::EDIT_PROFILE_ICON) {
-    // Draw filled square to make edited icons same width
-    oled.invertOutput(true);
-    for (uint8_t i = 0; i < 4; i++) {
-      oled.setCursor(102, i);
-      oled.clearToEOL();
-    }
-  }
-  Icon icon = current->icon();
-  if (icon.data != NULL) {
-    oled.bitmap(128 - icon.width - icon.offset, icon.page, 128 - icon.offset, 4, icon.data);
-  }
-
-  // Prepare for next draw
+  // Display and prepare for next draw
   oled.switchFrame();
   oled.invertOutput(false);
   oled.clear();
 }
 
+void renderProfileTimer() {
+  oled.setCursor(3 * 8, 2);
+
+  if (auto timer = Profiles.current->timer()) {
+    int8_t s = (int8_t) (timer / 1000);
+    int8_t ms = (int8_t) ((timer - s * 1000) / 100);
+
+    // Seconds
+    oled.invertOutput(state == State::EDIT_PROFILE_TIMER_S);
+    if (s < 10) oled.print(' ');  // Left pad
+    oled.print(s);
+    oled.invertOutput(false);
+    oled.print('.');
+
+    // Millis
+    oled.invertOutput(state == State::EDIT_PROFILE_TIMER_MS);
+    oled.print(ms);
+    oled.invertOutput(false);
+    oled.print(" sec");
+  }
+}
+
+void renderProfileIcon() {
+  auto icon = Profiles.current->icon();
+  uint8_t x1 = 128 - icon.width - icon.offset;
+  uint8_t x2 = 128 - icon.offset;
+
+  oled.invertOutput(state == State::EDIT_PROFILE_ICON);
+
+  if (icon.data != NULL) {
+    if (state == State::EDIT_PROFILE_ICON) {
+      // Clear any margins relative to widest icon
+      for (uint8_t y = 0; y < 4; y++) {
+        if (x1 > PROFILE_ICON_X) {
+          oled.setCursor(PROFILE_ICON_X, y);
+          oled.fillLength(0x00, x1 - PROFILE_ICON_X);
+        }
+        if (icon.offset) {
+          oled.setCursor(x2, y);
+          oled.fillLength(0x00, icon.offset);
+        }
+      }
+    }
+    // Draw icon
+    oled.bitmap(x1, icon.page, x2, 4, icon.data);
+
+  } else {
+    // Draw empty icon
+    for (uint8_t y = 0; y < 4; y++) {
+      oled.setCursor(PROFILE_ICON_X, y);
+      oled.clearToEOL();
+    }
+  }
+}
+
+
 void startCountdown() {
-  oled.switchDisplayFrame();
+  // Initialize countdown
   stopTime = millis() + Profiles.current->timer();
+  // Draw full progress bar
+  oled.setCursor(0, 2);
+  oled.fillLength(0x0F, 128);
+  oled.switchFrame();
+  oled.clear();
+  oled.switchRenderFrame();
 }
 
 void abortCountdown() {
   oled.switchRenderFrame();
   oled.clear();
-  drawProfile();
+  drawMenu();
 }
 
 void grindingHandler() {
   int32_t countdown = stopTime - millis();
 
   if (countdown > 0) {
-    // Grinding
+    // Grinding ...
     uint8_t newProgress = countdown * 128 / Profiles.current->timer(); 
     if (newProgress != progress) {
       progress = newProgress;
-      oled.setCursor(0, 2);
-      oled.fillLength(0x0F, progress);
+      oled.setCursor(progress, 2);
       oled.clearToEOL();
     }
 
   } else {
-    // Grinding Done! -> Simulate start button down
+    // Done! -> Simulate start button down
     pinMode(START_PIN, OUTPUT);
     digitalWrite(START_PIN, LOW);
-    
-    // Clear any last progress bar
+    startButton.read();  // Clear interrupt triggered event
+
+    // Clear any trailing progress bar
     oled.setCursor(0, 2);
     oled.fillLength(0x00, 8);
+
     // Show "done" screen
     oled.switchRenderFrame();
     oled.clear();
@@ -248,12 +324,12 @@ void grindingHandler() {
     oled.clear();
     delay(1000);
 
+    // Go back to profile menu
+    drawMenu();
+    state = State::PROFILE;
+
     // Simulate release of start button
     digitalWrite(START_PIN, HIGH);
     pinMode(START_PIN, INPUT_PULLUP);
-    
-    // Go back to profile menu
-    state = State::MENU;
-    drawProfile();
   }
 }
