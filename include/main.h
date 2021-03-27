@@ -12,7 +12,9 @@ enum class State {
   GRINDING              = 1 << 5
 };
 
-State state = State::MENU;
+State operator|(State a, State b) { return (State)((uint8_t)a | (uint8_t)b); }
+State operator&(State a, State b) { return (State)((uint8_t)a & (uint8_t)b); }
+
 
 int32_t stopTime;
 uint8_t progress = 0;

@@ -6,24 +6,16 @@
 #define BUTTON_DIGITAL_UP HIGH
 #define BUTTON_DIGITAL_DOWN LOW
 
-//template<class T> inline T operator~ (T a) { return (T)~(int)a; }
-//template<class T> inline T operator^ (T a, T b) { return (T)((int)a ^ (int)b); }
-//template<class T> inline T& operator|= (T& a, T b) { return (T&)((int&)a |= (int)b); }
-//template<class T> inline T& operator&= (T& a, T b) { return (T&)((int&)a &= (int)b); }
-//template<class T> inline T& operator^= (T& a, T b) { return (T&)((int&)a ^= (int)b); }
-template<class T> inline T operator| (T a, T b) { return (T)((int)a | (int)b); }
-template<class T> inline T operator& (T a, T b) { return (T)((int)a & (int)b); }
-
 class Button {
 
 public:
-  enum class Event {
+  enum class Event : uint8_t {
     NONE         = 0,
     UP           = 1 << 0,
     DOWN         = 1 << 1,
     CLICK        = 1 << 2,
     LONG_HOLD    = 1 << 3,
-    ALL = UP | DOWN | CLICK | LONG_HOLD
+    ALL = UP | DOWN | CLICK | LONG_HOLD,
   };
 
   Button(uint8_t pin, Event events = Event::CLICK, int16_t analogThreshold = 0);
@@ -51,5 +43,13 @@ private:
 
   uint8_t readState();
 };
+
+inline Button::Event operator|(Button::Event a, Button::Event b) {
+  return (Button::Event)((uint8_t)a | (uint8_t)b);
+}
+
+inline Button::Event operator&(Button::Event a, Button::Event b) {
+  return (Button::Event)((uint8_t)a & (uint8_t)b);
+}
 
 #endif
