@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#define digit(i) (char)(i+48)
+
 enum class State : uint8_t {
   MANUAL                = 1 << 0,
   PROFILE               = 1 << 1,

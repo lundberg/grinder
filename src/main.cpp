@@ -96,19 +96,28 @@ void loop() {
 }
 
 void menuLoop() {
+  // Handle rotary encoder menu navigation
   RotaryEncoder::Direction direction = encoder.getDirection();
   if (direction != RotaryEncoder::Direction::NOROTATION) {
-    // Rotary encoder menu navigation
     Profiles.changeProfile((int8_t)direction);
     state = Profiles.current ? State::PROFILE : State::MANUAL;
     drawMenu();
+  } 
 
-  } else if (state == State::PROFILE) {
-    // Profile menu-button long hold -> Edit
+  // Handle menu button long hold
     menuButton.tick();
     if (menuButton.read() == Button::Event::LONG_HOLD) {
+    if (state == State::PROFILE) {
+      // Edit mode
       state = State::EDIT_PROFILE_TYPE;
       drawMenu();
+    } else {
+      // Show version
+      oled.switchRenderFrame();
+      oled.setCursor(56, 1);
+      oled.print(digit(VERSION.major));
+      oled.print('.');
+      oled.print(digit(VERSION.minor));
     }
   }
 }

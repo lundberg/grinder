@@ -20,6 +20,13 @@
 #define MIN_TIMER 1000
 #define MAX_TIMER 30000
 
+struct Version {
+  const uint8_t major;
+  const uint8_t minor;
+};
+
+const Version VERSION = {1, 0};
+
 int16_t limit(int16_t number, int16_t min, int16_t max);
 
 struct {
