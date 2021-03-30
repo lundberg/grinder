@@ -183,26 +183,26 @@ void drawMenu() {
   switchToBufferRenderFrame();
 
   if (state == State::MANUAL) {
-    // Manual mode
+    // Draw manual mode
     oled.clear();
     oled.setCursor(0, 1);
     oled.print("Manual");
     oled.bitmap(ICON_OFFSET_X, 0, 128, 4, MANUAL_ICON.data);
 
   } else {
-    // Profile number
+    // Draw profile number
     oled.setCursor(0, 0);
     oled.invertOutput(false);
-    oled.print(Profiles.data.profile); oled.print('.');
+    oled.print(digit(Profiles.data.profile)); oled.print('.');
     
-    // Profile type / label
+    // Draw profile type / label
     oled.invertOutput(state == State::EDIT_PROFILE_TYPE);
     oled.print(Profiles.current->label());
     
-    // Profile timer
+    // Draw profile timer
     oled.invertOutput(false);
     if (Profiles.current->isEmpty()) {
-      // No timer
+      // No timer/profile set
       erase(0, 2, TIMER_OFFSET_X + 8 * 8, 4);
     } else {
       // Icon
@@ -214,7 +214,7 @@ void drawMenu() {
       oled.print(" sec");
     } 
 
-    // Profile Icon
+    // Draw profile Icon
     renderProfileIcon();
   }
 
@@ -223,8 +223,8 @@ void drawMenu() {
 
 void renderProfileTimer() {
   auto timer = Profiles.current->timer();
-  int8_t s = (int8_t) (timer / 1000);
-  int8_t ms = (int8_t) ((timer - s * 1000) / 100);
+  uint8_t s = (uint8_t) (timer / 1000);
+  uint8_t ms = (uint8_t) ((timer - s * 1000) / 100);
 
   // Seconds
   oled.setCursor(TIMER_OFFSET_X, 2);
@@ -236,7 +236,7 @@ void renderProfileTimer() {
 
   // Millis
   oled.invertOutput(state == State::EDIT_PROFILE_TIMER_MS);
-  oled.print(ms);
+  oled.print(digit(ms));
 }
 
 void renderProfileIcon() {
@@ -263,7 +263,7 @@ void renderProfileIcon() {
 
 void startCountdown() {
   // Initialize countdown timer, i.e. future stop time
-  stopTime = millis() + Profiles.current->timer();
+  stopTime = millis() + Profiles.current->timer() + COUNTDOWN_UNSIGNED_OFFSET;
 
   // Draw full progress bar
   oled.clear();
@@ -280,11 +280,13 @@ void abortCountdown() {
 }
 
 void grindingLoop() {
-  int32_t countdown = stopTime - millis();
+  uint32_t countdown = stopTime - millis();
 
-  if (countdown > 0) {
+  if (countdown > COUNTDOWN_UNSIGNED_OFFSET) {
     // Grinding ...
-    uint8_t newProgress = countdown * 128 / Profiles.current->timer(); 
+    countdown -= COUNTDOWN_UNSIGNED_OFFSET;  // Remove unsigned long offset
+    countdown *= 128;  // Scale to screen width
+    uint8_t newProgress = countdown / Profiles.current->timer(); 
     if (newProgress != progress) {
       progress = newProgress;
       oled.setCursor(progress, 2);
@@ -309,9 +311,9 @@ void grindingLoop() {
     delay(1000);
 
     // Go back to profile menu
+    state = State::PROFILE;
     oled.clear();
     drawMenu();
-    state = State::PROFILE;
 
     // Simulate release of start button
     digitalWrite(START_BUTTON_PIN, HIGH);

@@ -19,6 +19,7 @@
 
 #define MIN_TIMER 1000
 #define MAX_TIMER 30000
+#define COUNTDOWN_UNSIGNED_OFFSET 1000
 
 struct Version {
   const uint8_t major;

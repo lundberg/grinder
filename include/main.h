@@ -28,7 +28,7 @@ State operator&(State a, State b) { return (State)((uint8_t)a & (uint8_t)b); }
 
 State state = State::MANUAL;
 
-int32_t stopTime;
+uint32_t stopTime;
 uint8_t progress = 0;
 
 void menuLoop();
