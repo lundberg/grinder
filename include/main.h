@@ -29,14 +29,14 @@ State state = State::MANUAL;
 int32_t stopTime;
 uint8_t progress = 0;
 
-void menuHandler();
-void profileHandler();
-void editHandler();
-void grindingHandler();
+void menuLoop();
+void editLoop();
+void grindingLoop();
 
+void erase();
+void drawMenu();
 void renderProfileTimer();
 void renderProfileIcon();
-void drawMenu();
 
 void startCountdown();
 void abortCountdown();

@@ -14,8 +14,8 @@
 #define PROFILE_TYPE_COUNT 3
 
 #define PROFILE_ICON_COUNT 3
-#define PROFILE_ICON_MAX_WIDTH 26
-#define PROFILE_ICON_X (128 - PROFILE_ICON_MAX_WIDTH)
+#define ICON_OFFSET_X 98  // 128 - manual icon width
+#define TIMER_OFFSET_X 24  // 3 chars, 8 pixels each
 
 #define MIN_TIMER 1000
 #define MAX_TIMER 30000
@@ -31,11 +31,11 @@ struct {
     .icons={NO_ICON, NO_ICON, NO_ICON}
   },
   {
-    .label="Moka Pot",
+    .label="Moka Pot ",
     .icons={BIALETTI_ICON, ALESSI_ICON, VEV_VIGANO_ICON}
   },
   {
-    .label="Fr Press",
+    .label="Fr Press ",
     .icons={BODUM_ICON, NO_ICON, NO_ICON}
   },
   {
@@ -85,7 +85,7 @@ struct Profile {
   void changeIcon(int8_t delta) {
     // Find max icon index for current profile type
     int8_t max = -1;
-    for (; max < PROFILE_ICON_COUNT - 1 && PROFILE_TYPES[_type].icons[max+1].data != NULL; max++) {}
+    while (max < PROFILE_ICON_COUNT - 1 && PROFILE_TYPES[_type].icons[max+1].data != NULL) { max++; }
     _icon = limit(_icon + delta, OFF, max);
   }
 };
@@ -134,16 +134,7 @@ struct ProfilesClass {
 };
 
 int16_t limit(int16_t number, int16_t min, int16_t max) {
-  /* 
-  * Return given number, limited to min and max.
-  */
-  if (number > max) {
-    return max;
-  } else if (number < min) {
-    return min;
-  } else {
-    return number;
-  }
+  return number < min ? min : number > max ? max : number;
 }
 
 static ProfilesClass Profiles;
