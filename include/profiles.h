@@ -22,8 +22,8 @@
 #define COUNTDOWN_UNSIGNED_OFFSET 1000
 
 struct Version {
-  const uint8_t major;
-  const uint8_t minor;
+  uint8_t major;
+  uint8_t minor;
 };
 
 const Version VERSION = {1, 0};
@@ -100,7 +100,8 @@ struct Profile {
 
 struct ProfilesClass {
   struct Data {
-    int8_t profile;
+    Version version;
+    uint8_t profile;
     Profile profiles[MAX_PROFILE_COUNT];
   } data;
 
@@ -108,10 +109,12 @@ struct ProfilesClass {
 
   void load() {
     EEPROM.get(0, data);
-    current = getCurrentProfile();
 
-    if (data.profile == UINT8_MAX) {
+    // Reset if new major version or first boot
+    if (VERSION.major > data.version.major || data.profile >= MAX_PROFILE_COUNT) {
       this->reset();
+    } else {
+      current = getCurrentProfile();
     }
   }
 
@@ -120,10 +123,11 @@ struct ProfilesClass {
   }
 
   void reset() {
-    setProfile(NONE);
+    data.version = VERSION;
     for (uint8_t i = 0; i < MAX_PROFILE_COUNT; i++) {
       data.profiles[i] = {EMPTY, 0, OFF};
     }
+    setProfile(NONE);
     save();
   }
 
