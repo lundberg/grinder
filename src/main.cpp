@@ -276,7 +276,12 @@ void startCountdown() {
 }
 
 void abortCountdown() {
-  oled.switchRenderFrame();
+  // Clear progress bar
+  oled.setCursor(0, 2);
+  oled.clearToEOL();
+
+  // Show "menu" screen
+  switchToBufferRenderFrame();
   oled.clear();
   drawMenu();
 }
