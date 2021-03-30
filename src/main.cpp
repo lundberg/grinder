@@ -266,9 +266,11 @@ void startCountdown() {
   stopTime = millis() + Profiles.current->timer() + COUNTDOWN_UNSIGNED_OFFSET;
 
   // Draw full progress bar
+  switchToBufferRenderFrame();
+  oled.invertOutput(false);
   oled.clear();
   oled.setCursor(0, 2);
-  oled.fillLength(0x0F, 128);
+  oled.fillLength(0b00000011, 128);
   oled.switchFrame();
   oled.switchRenderFrame();
 }
