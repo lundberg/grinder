@@ -35,6 +35,7 @@ void menuLoop();
 void editLoop();
 void grindingLoop();
 
+void switchToBufferRenderFrame();
 void erase();
 void drawMenu();
 void renderProfileTimer();

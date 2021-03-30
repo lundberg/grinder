@@ -125,36 +125,23 @@ void menuLoop() {
 void editLoop() {
   menuButton.tick();
 
-  // Handle menu button click
+  // Handle menu button
   Button::Event event = menuButton.read();
   if (event == Button::Event::CLICK && !Profiles.current->isEmpty()) {
-    // Ensure we're on the right render buffer
-    if (state != State::EDIT_PROFILE_TYPE) {
-      oled.switchRenderFrame();
-    }
-
-    // Cycle profile field to edit
+    // Click -> Cycle profile field to edit
     state = (State)((int8_t)state << 1);
     if (state > State::EDIT_PROFILE_ICON) {
       state = State::EDIT_PROFILE_TYPE;
     }
-
     drawMenu();
-
-    // Render timer and icon fields fast direct on display buffer
+    // Render timer and icon fields fast direct on display frame
     if (state != State::EDIT_PROFILE_TYPE) {
       oled.switchRenderFrame();
     }
     
   } else if (event == Button::Event::LONG_HOLD) {
-    // Save profile and go back to menu
+    // Long hold -> Save profile and go back to menu
     Profiles.save();
-
-    // Ensure we're on the right render buffer
-    if (state != State::EDIT_PROFILE_TYPE) {
-      oled.switchRenderFrame();
-    }
-
     state = State::PROFILE;
     drawMenu();
   }
@@ -178,6 +165,12 @@ void editLoop() {
   }
 }
 
+void switchToBufferRenderFrame() {
+  if (oled.currentRenderFrame() == oled.currentDisplayFrame()) {
+    oled.switchRenderFrame();
+  }
+}
+
 void erase(uint8_t x, uint8_t y, uint8_t x2, uint8_t y2) {
   if (x2 <= x || y2 <= y) return;
   for (; y < y2; y++) {
@@ -187,6 +180,8 @@ void erase(uint8_t x, uint8_t y, uint8_t x2, uint8_t y2) {
 }
 
 void drawMenu() {
+  switchToBufferRenderFrame();
+
   if (state == State::MANUAL) {
     // Manual mode
     oled.clear();
