@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-//#define TINY4KOLED_QUICK_BEGIN  // Uncomment for white OLED
+#define TINY4KOLED_QUICK_BEGIN  // White OLED
 #include <TinyWireM.h>
 #include <Tiny4kOLED.h>
 
@@ -45,9 +45,9 @@ void setup() {
 
   // Initialize screen
   oled.begin();
-  oled.setDisplayClock(1, 15);
+  oled.setDisplayClock(1, 0);
   oled.setInternalIref(true);
-  oled.setContrast(0xFF);
+  oled.setContrast(0x60);
   oled.setFont(FONT8X16);
   oled.clear();
   oled.switchRenderFrame();
@@ -105,8 +105,8 @@ void menuLoop() {
   } 
 
   // Handle menu button long hold
-    menuButton.tick();
-    if (menuButton.read() == Button::Event::LONG_HOLD) {
+  menuButton.tick();
+  if (menuButton.read() == Button::Event::LONG_HOLD) {
     if (state == State::PROFILE) {
       // Edit mode
       state = State::EDIT_PROFILE_TYPE;
