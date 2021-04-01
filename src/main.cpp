@@ -312,10 +312,11 @@ void grindingLoop() {
     // Show "done" screen
     oled.switchRenderFrame();
     oled.clear();
-    oled.setCursor(44, 1);
+    oled.bitmap(28, 1, 49, 3, cup_icon21x16);
+    oled.setCursor(58, 1);
     oled.print("Done!");
     oled.switchFrame();
-    delay(1000);
+    delay(1500);
 
     // Go back to profile menu
     state = State::PROFILE;
