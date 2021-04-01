@@ -3,6 +3,7 @@
 #define TINY4KOLED_QUICK_BEGIN  // White OLED
 #include <TinyWireM.h>
 #include <Tiny4kOLED.h>
+#include <font8x16atari.h>
 
 #include <Button.h>
 #include <RotaryEncoder.h>
@@ -35,7 +36,7 @@ void setup() {
   menuButton.begin();
   startButton.begin();
   
-  // Load or reset Settings
+  // Load or reset profile settings
   if (menuButton.peek() == Button::Event::DOWN) {
     Profiles.reset();
   } else {
@@ -48,7 +49,7 @@ void setup() {
   oled.setDisplayClock(1, 0);
   oled.setInternalIref(true);
   oled.setContrast(0x60);
-  oled.setFont(FONT8X16);
+  oled.setFont(FONT8X16ATARI);
   oled.clear();
   oled.switchRenderFrame();
   oled.clear();
