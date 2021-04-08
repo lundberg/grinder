@@ -28,6 +28,7 @@ State operator&(State a, State b) { return (State)((uint8_t)a & (uint8_t)b); }
 
 State state = State::MANUAL;
 
+uint32_t sleepTime;
 uint32_t stopTime;
 uint8_t progress = 0;
 
@@ -43,5 +44,8 @@ void renderProfileIcon();
 
 void startCountdown();
 void abortCountdown();
+
+void resetSleepTime();
+void sleep();
 
 #endif

@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <avr/sleep.h>
 
 #define TINY4KOLED_QUICK_BEGIN  // White OLED
 #include <TinyWireM.h>
@@ -11,6 +12,7 @@
 #include <main.h>
 #include <profiles.h>
 
+#define SLEEP_TIMER 60000  // 1 min
 #define START_BUTTON_PIN PB1
 
 Button startButton(START_BUTTON_PIN, Button::Event::DOWN);
@@ -55,6 +57,9 @@ void setup() {
   oled.clear();
   drawMenu();
   oled.on();
+
+  // Set future sleep time
+  resetSleepTime();
 }
 
 void loop() {
@@ -121,6 +126,11 @@ void menuLoop() {
       oled.print(digit(VERSION.minor));
     }
   }
+
+  // Check if it's time to go to sleep
+  if (millis() > sleepTime) {
+    sleep();
+  }
 }
 
 void editLoop() {
@@ -181,6 +191,7 @@ void erase(uint8_t x, uint8_t y, uint8_t x2, uint8_t y2) {
 }
 
 void drawMenu() {
+  resetSleepTime();
   switchToBufferRenderFrame();
 
   if (state == State::MANUAL) {
@@ -332,4 +343,23 @@ void grindingLoop() {
     startButton.read();
     encoder.getDirection();
   }
+}
+
+void resetSleepTime() {
+  sleepTime = millis() + SLEEP_TIMER;
+}
+
+void sleep() {
+  // Go to sleep
+  oled.off();
+  ADCSRA &= ~(1 << ADEN);  // Disable ADC
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+  sleep_cpu();
+
+  // Sleep interrupted -> Wake up
+  sleep_disable();
+  ADCSRA |= (1 << ADEN);  // Enable ADC
+  oled.on();
+  resetSleepTime();
 }
