@@ -6,9 +6,9 @@
 
 #include <icons.h>
 
-#define OFF -1
-#define NONE 0
-#define EMPTY 0
+#define _OFF -1
+#define _NONE 0
+#define _EMPTY 0
 
 #define MAX_PROFILE_COUNT 9
 #define PROFILE_TYPE_COUNT 3
@@ -58,7 +58,7 @@ struct Profile {
   int8_t _icon;
 
   bool isEmpty() {
-    return _type == EMPTY;
+    return _type == _EMPTY;
   }
 
   const char* label() {
@@ -70,11 +70,11 @@ struct Profile {
   }
 
   const Icon& icon() {
-    return _icon == OFF ? NO_ICON : PROFILE_TYPES[_type].icons[_icon];
+    return _icon == _OFF ? NO_ICON : PROFILE_TYPES[_type].icons[_icon];
   }
 
   void changeType(int8_t delta) {
-    int8_t next = limit(_type + delta, EMPTY, PROFILE_TYPE_COUNT);
+    int8_t next = limit(_type + delta, _EMPTY, PROFILE_TYPE_COUNT);
     if (next != _type) {
       _type = next;
       _icon = 0;
@@ -94,7 +94,7 @@ struct Profile {
     // Find max icon index for current profile type
     int8_t max = -1;
     while (max < PROFILE_ICON_COUNT - 1 && PROFILE_TYPES[_type].icons[max+1].data != NULL) { max++; }
-    _icon = limit(_icon + delta, OFF, max);
+    _icon = limit(_icon + delta, _OFF, max);
   }
 };
 
@@ -125,14 +125,14 @@ struct ProfilesClass {
   void reset() {
     data.version = VERSION;
     for (uint8_t i = 0; i < MAX_PROFILE_COUNT; i++) {
-      data.profiles[i] = {EMPTY, 0, OFF};
+      data.profiles[i] = {_EMPTY, 0, _OFF};
     }
-    setProfile(NONE);
+    setProfile(_NONE);
     save();
   }
 
   Profile* getCurrentProfile() {
-    return data.profile == NONE ? NULL : &(data.profiles[data.profile - 1]);
+    return data.profile == _NONE ? NULL : &(data.profiles[data.profile - 1]);
   }
 
   void setProfile(int8_t i) {
@@ -141,7 +141,7 @@ struct ProfilesClass {
   }
   
   void changeProfile(int8_t delta) {
-    setProfile(limit(data.profile + delta, NONE, MAX_PROFILE_COUNT));
+    setProfile(limit(data.profile + delta, _NONE, MAX_PROFILE_COUNT));
   }
 };
 
