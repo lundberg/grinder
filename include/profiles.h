@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
+#include <CRC.h>
 #include <icons.h>
 
 #define _OFF -1
@@ -103,27 +104,39 @@ struct ProfilesClass {
     Version version;
     uint8_t profile;
     Profile profiles[MAX_PROFILE_COUNT];
+    CRC32 crc;
   } data;
 
   struct Profile *current = NULL;
 
-  void load() {
+  bool load() {
     EEPROM.get(0, data);
 
-    // Reset if new major version or first boot
-    if (VERSION.major > data.version.major || data.profile >= MAX_PROFILE_COUNT) {
-      this->reset();
-    } else {
+    if (data.crc == objectCRC(data) && data.version.major == VERSION.major) {
+      // Loaded data is OK
       current = getCurrentProfile();
+      return true;
+
+    } else {
+      // Corrupt data or wrong major version
+      this->reset();
+      return false;
     }
   }
 
   void save() {
-    EEPROM.put(0, data);
+    data.version = VERSION;
+    CRC32 crc = objectCRC(data);
+
+    if (crc != data.crc) {
+      // Data has changed
+      data.crc = crc;
+      EEPROM.put(0, data);
+    }
   }
 
   void reset() {
-    data.version = VERSION;
+    data.crc = 0;
     for (uint8_t i = 0; i < MAX_PROFILE_COUNT; i++) {
       data.profiles[i] = {_EMPTY, 0, _OFF};
     }
