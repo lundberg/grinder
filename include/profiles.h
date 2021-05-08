@@ -41,7 +41,7 @@ struct {
   },
   {
     .label="Moka Pot ",
-    .icons={BIALETTI_ICON, ALESSI_ICON, VEV_VIGANO_ICON}
+    .icons={VEV_VIGANO_ICON, ALESSI_ICON, BIALETTI_ICON}
   },
   {
     .label="Fr Press ",
