@@ -1,2 +1,7 @@
 .pio
 .vscode
+.clang_complete
+.gcc-flags.json
+.ccls
+.ccls-cache
+*.hex
