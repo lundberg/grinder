@@ -86,8 +86,8 @@ void setup() {
   // Initialize display
   oled.begin();
   oled.setDisplayClock(1, 0);
-  oled.setInternalIref(true);
-  oled.setContrast(0x60);
+  oled.setInternalIref(false);
+  oled.setContrast(0xFF);
   oled.setFont(FONT8X16ATARI);
   oled.clear();
   oled.switchRenderFrame();
