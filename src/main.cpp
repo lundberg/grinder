@@ -352,8 +352,6 @@ void renderDone() {
   oled.setCursor(58, 1);
   oled.print("Done!");
   oled.switchFrame();
-  oled.on();
-  delay(1500);
 
   // Go back to menu
   state = State::MENU;
