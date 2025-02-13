@@ -5,7 +5,7 @@
 
 #define digit(i) (char)(i+48)
 
-#define SLEEP_TIMEOUT 60000  // 1 min
+#define SLEEP_TIMEOUT 120000  // 2 min
 
 // Board pin and port definitions
 #if defined(__AVR_ATtiny85__)
