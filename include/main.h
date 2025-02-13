@@ -2,6 +2,7 @@
 #define main_h
 
 #include <Arduino.h>
+#include <Trigger.h>
 
 #define digit(i) (char)(i+48)
 
@@ -54,7 +55,7 @@ uint8_t progress = 0;
 void menuLoop();
 void editLoop();
 void profileGrindingLoop();
-void manualGrindingLoop();
+void manualGrindingLoop(Trigger frameCounter);
 
 void switchToBufferRenderFrame();
 void erase();

@@ -20,8 +20,6 @@ Reader motorInput(MOTOR_PIN);
 Button menuButton(ROTARY_BUTTON_PIN, Button::Event::CLICK | Button::Event::LONG_HOLD, LOW, ROTARY_BUTTON_THRESHOLD);
 RotaryEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, RotaryEncoder::LatchMode::FOUR3);
 
-Trigger frameCounter(5, false);
-
 #if defined(__AVR_ATtiny85__)
 ISR(PCINT0_vect) {
   /**
@@ -114,6 +112,8 @@ void setup() {
 }
 
 void loop() {
+  Trigger frameCounter(5, false);
+
   // Handle grinder motor starting and stopping
   Reader::Event motorEvent = motorInput.read();
   if (motorEvent == Reader::Event::ACTIVE) {
@@ -159,7 +159,7 @@ void loop() {
   } else if (state == State::PROFILE_GRINDING) {
     profileGrindingLoop();
   } else if (state == State::MANUAL_GRINDING) {
-    manualGrindingLoop();
+    manualGrindingLoop(frameCounter);
   }
 }
 
@@ -386,7 +386,7 @@ void profileGrindingLoop() {
   }
 }
 
-void manualGrindingLoop() {
+void manualGrindingLoop(Trigger frameCounter) {
   if (frameCounter.read(true)) {
     uint8_t x = 127 - frameCounter.count;
     oled.setCursor(x == 126 ? 0 : x + 1, 2);
