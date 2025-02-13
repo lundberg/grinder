@@ -119,7 +119,7 @@ struct ProfilesClass {
 
     } else {
       // Corrupt data or wrong major version
-      this->reset();
+      // this->reset();
       return false;
     }
   }
