@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#include <CRC.h>
-#include <icons.h>
+#include <CRC.hpp>
+#include <icons.hpp>
 
 #define _OFF -1
 #define _NONE 0

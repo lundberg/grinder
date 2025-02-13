@@ -2,7 +2,7 @@
 #define main_h
 
 #include <Arduino.h>
-#include <Trigger.h>
+#include <Trigger.hpp>
 
 #define digit(i) (char)(i+48)
 

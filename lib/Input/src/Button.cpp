@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Button.h>
+#include <Button.hpp>
 
 void Button::setHoldDuration(unsigned long ms) {
   this->holdDuration = ms;

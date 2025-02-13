@@ -8,13 +8,13 @@
 #include <Tiny4kOLED.h>
 #include <font8x16atari.h>
 
-#include <Reader.h>
-#include <Button.h>
-#include <Trigger.h>
+#include <Reader.hpp>
+#include <Button.hpp>
+#include <Trigger.hpp>
 #include <RotaryEncoder.h>
 
-#include <main.h>
-#include <profiles.h>
+#include <main.hpp>
+#include <profiles.hpp>
 
 static Reader motorInput(MOTOR_PIN);
 static Button menuButton(ROTARY_BUTTON_PIN, Button::Event::CLICK | Button::Event::LONG_HOLD, LOW, ROTARY_BUTTON_THRESHOLD);

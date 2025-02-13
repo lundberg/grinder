@@ -2,7 +2,7 @@
 #define __READER__
 
 #include <Arduino.h>
-#include <Input.h>
+#include <Input.hpp>
 
 enum class ReaderEvent : uint8_t {
   INACTIVE = 1 << 0,

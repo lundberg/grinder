@@ -2,7 +2,7 @@
 #define __BUTTON__
 
 #include <Arduino.h>
-#include <Input.h>
+#include <Input.hpp>
 
 enum class ButtonEvent : uint8_t {
   UP           = 1 << 0,
