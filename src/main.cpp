@@ -16,9 +16,9 @@
 #include <main.h>
 #include <profiles.h>
 
-Reader motorInput(MOTOR_PIN);
-Button menuButton(ROTARY_BUTTON_PIN, Button::Event::CLICK | Button::Event::LONG_HOLD, LOW, ROTARY_BUTTON_THRESHOLD);
-RotaryEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, RotaryEncoder::LatchMode::FOUR3);
+static Reader motorInput(MOTOR_PIN);
+static Button menuButton(ROTARY_BUTTON_PIN, Button::Event::CLICK | Button::Event::LONG_HOLD, LOW, ROTARY_BUTTON_THRESHOLD);
+static RotaryEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, RotaryEncoder::LatchMode::FOUR3);
 
 #if defined(__AVR_ATtiny85__)
 ISR(PCINT0_vect) {
