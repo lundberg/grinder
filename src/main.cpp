@@ -117,17 +117,13 @@ void loop() {
   // Handle grinder motor starting and stopping
   Reader::Event motorEvent = motorInput.read();
   if (motorEvent == Reader::Event::ACTIVE) {
-    // Prepare display frame for fast and direct rendring
-    switchToBufferRenderFrame();
-    oled.invertOutput(false);
-    oled.clear();
-    oled.switchFrame();
-    oled.switchRenderFrame();
+    renderProgressbar();
 
     if (state == State::PROFILE_GRINDING) {
       // Started grinding profile
       // Initialize countdown timer, i.e. future stop time. TODO: Use Trigger class
       stopTime = millis() + Profiles.current->timer();
+      progress = 0;
 
     } else {
       // Started manual grinding timer 
@@ -357,8 +353,36 @@ void renderDone() {
   oled.setCursor(58, 1);
   oled.print("Done!");
   oled.switchFrame();
+}
 
+void renderProgressbar() {
+  switchToBufferRenderFrame();
+  oled.invertOutput(false);
   oled.clear();
+
+  // Draw box (byte visually rotated 90 ccw)
+  oled.setCursor(0, 1);
+  oled.fillLength(0b01000000, 128);  // Top border
+  oled.fillLength(0b11000000, 1);    // Top left corner
+  oled.setCursor(127, 1);
+  oled.fillLength(0b11000000, 1);    // Top right corner
+
+  oled.setCursor(0, 2);
+  oled.fillLength(0b11111111, 1);    // Left border
+  oled.setCursor(3, 2);
+  oled.fillLength(0b01111110, 1);    // Draw first progress line to ensure start position
+  oled.setCursor(127, 2);
+  oled.fillLength(0b11111111, 1);    // Right border
+
+  oled.setCursor(0, 3);
+  oled.fillLength(0b00000010, 128);  // Bottom border
+  oled.fillLength(0b00000011, 1);    // Bottom left corder
+  oled.setCursor(127, 3);
+  oled.fillLength(0b00000011, 1);    // Bottom right corner
+
+  // Prepare display frame for fast and direct rendring
+  oled.switchFrame();
+  oled.switchRenderFrame();
 }
 
 void profileGrindingLoop() {
@@ -367,13 +391,12 @@ void profileGrindingLoop() {
 
   if (countdown > 0 && !abort) {
     // Grinding ...
-    countdown *= 126;  // Scale to screen width
+    countdown *= PROGRESSBAR_WIDTH;  // Scale to progress bar width
     uint8_t newProgress = countdown / Profiles.current->timer(); 
-    if (newProgress != progress) {
-      oled.fillLength(0x00, 2);  // Clear old dot
+    if (newProgress != progress && newProgress > 0) {  // TODO: Use limit(progress, 0, 122)
       progress = newProgress;
-      oled.setCursor(progress, 2);
-      oled.fillLength(0b00000011, 2);  // Draw new dot
+      oled.setCursor(3 + PROGRESSBAR_WIDTH - progress, 2);
+      oled.fillLength(0b01111110, 1);  // Draw new vertical progress line
     }
 
   } else {

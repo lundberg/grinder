@@ -13,10 +13,7 @@
 
 #define MAX_PROFILE_COUNT 9
 #define PROFILE_TYPE_COUNT 3
-
 #define PROFILE_ICON_COUNT 3
-#define ICON_OFFSET_X 98  // 128 - manual icon width
-#define TIMER_OFFSET_X 24  // 3 chars, 8 pixels each
 
 #define MIN_TIMER 1000
 #define MAX_TIMER 30000

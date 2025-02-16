@@ -8,6 +8,10 @@
 
 #define SLEEP_TIMEOUT 120000  // 2 min
 
+#define PROGRESSBAR_WIDTH 122  // 128 - 2 * 3 padding
+#define ICON_OFFSET_X 98  // 128 - manual icon width
+#define TIMER_OFFSET_X 24  // 3 chars, 8 pixels each
+
 // Board pin and port definitions
 #if defined(__AVR_ATtiny85__)
 #define MOTOR_PIN PB1
@@ -63,6 +67,7 @@ void drawMenu();
 void renderProfileTimer();
 void renderProfileIcon();
 void renderDone();
+void renderProgressbar();
 
 void resetSleepTimer();
 void sleep();
