@@ -144,11 +144,16 @@ void loop() {
     frameCounter.stop();
     renderDone();
     delay(1500);
+    oled.clear();  // TODO: Get rid of
+    
+    // Reset any button- and/or interrupt-triggered events during grinding
+    encoder.getDirection();
+    menuButton.read();
 
     // Go back to menu
     state = State::MENU;
-    oled.clear();
     drawMenu();
+    oled.clear();  // TODO: Get rid of
   }
 
   // Dispatch current state loop
@@ -353,10 +358,7 @@ void renderDone() {
   oled.print("Done!");
   oled.switchFrame();
 
-  // Go back to menu
-  state = State::MENU;
   oled.clear();
-  drawMenu();
 }
 
 void profileGrindingLoop() {
@@ -378,9 +380,6 @@ void profileGrindingLoop() {
     // Done! (or aborted) -> Stop grinder motor
     digitalWrite(MOTOR_PIN, LOW);
     motorInput.begin();
-
-    // Reset any interrupt triggered events while grinding
-    encoder.getDirection();
   }
 }
 
