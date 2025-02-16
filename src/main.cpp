@@ -127,7 +127,7 @@ void loop() {
     if (state == State::PROFILE_GRINDING) {
       // Started grinding profile
       // Initialize countdown timer, i.e. future stop time. TODO: Use Trigger class
-      stopTime = millis() + Profiles.current->timer() + COUNTDOWN_UNSIGNED_OFFSET;
+      stopTime = millis() + Profiles.current->timer();
 
     } else {
       // Started manual grinding timer 
@@ -361,10 +361,10 @@ void renderDone() {
 
 void profileGrindingLoop() {
   uint32_t countdown = stopTime - millis();
+  bool abort = menuButton.is(Button::Event::DOWN);
 
-  if (countdown > COUNTDOWN_UNSIGNED_OFFSET && menuButton.is(Button::Event::UP)) {
+  if (countdown > 0 && !abort) {
     // Grinding ...
-    countdown -= COUNTDOWN_UNSIGNED_OFFSET;  // Remove unsigned long offset
     countdown *= 126;  // Scale to screen width
     uint8_t newProgress = countdown / Profiles.current->timer(); 
     if (newProgress != progress) {
@@ -375,7 +375,7 @@ void profileGrindingLoop() {
     }
 
   } else {
-    // Done! -> Stop grinder motor
+    // Done! (or aborted) -> Stop grinder motor
     digitalWrite(MOTOR_PIN, LOW);
     motorInput.begin();
 
