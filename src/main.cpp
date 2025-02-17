@@ -19,6 +19,7 @@
 static Reader motorInput(MOTOR_PIN);
 static Button menuButton(ROTARY_BUTTON_PIN, Button::Event::CLICK | Button::Event::LONG_HOLD, LOW, ROTARY_BUTTON_THRESHOLD);
 static RotaryEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, RotaryEncoder::LatchMode::FOUR3);
+static Trigger frameCounter(5, false);
 
 #if defined(__AVR_ATtiny85__)
 ISR(PCINT0_vect) {
@@ -112,8 +113,6 @@ void setup() {
 }
 
 void loop() {
-  Trigger frameCounter(5, false);
-
   // Handle grinder motor starting and stopping
   Reader::Event motorEvent = motorInput.read();
   if (motorEvent == Reader::Event::ACTIVE) {
@@ -160,7 +159,7 @@ void loop() {
   } else if (state == State::PROFILE_GRINDING) {
     profileGrindingLoop();
   } else if (state == State::MANUAL_GRINDING) {
-    manualGrindingLoop(frameCounter);
+    manualGrindingLoop();
   }
 }
 
@@ -406,16 +405,14 @@ void profileGrindingLoop() {
   }
 }
 
-void manualGrindingLoop(Trigger frameCounter) {
+void manualGrindingLoop() {
+  uint8_t progress = frameCounter.count % (PROGRESSBAR_WIDTH - 6);
   if (frameCounter.read(true)) {
-    uint8_t x = 127 - frameCounter.count;
-    oled.setCursor(x == 126 ? 0 : x + 1, 2);
-    oled.fillLength(0x00, 2);  // Clear old dot
-    oled.setCursor(x, 2);
-    oled.fillLength(0b00000011, 2);  // Draw new dot
-    if (x == 0) {
-      frameCounter.count = 0;  // Loop
-    }
+    oled.setCursor(3 + progress, 2);
+    oled.fillLength(0x00, 6);  // Clear old square
+    progress = frameCounter.count % (PROGRESSBAR_WIDTH - 6);
+    oled.setCursor(3 + progress, 2);
+    oled.fillLength(0b01111110, 6);  // Draw new square
   }
 }
 

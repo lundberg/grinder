@@ -59,7 +59,7 @@ uint8_t progress = 0;
 void menuLoop();
 void editLoop();
 void profileGrindingLoop();
-void manualGrindingLoop(Trigger frameCounter);
+void manualGrindingLoop();
 
 void switchToBufferRenderFrame();
 void erase();
