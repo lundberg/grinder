@@ -2,6 +2,7 @@
 #define main_h
 
 #include <Arduino.h>
+#include <RotaryEncoder.h>
 #include <Trigger.hpp>
 
 #define digit(i) (char)(i+48)
@@ -60,6 +61,8 @@ void menuLoop();
 void editLoop();
 void profileGrindingLoop();
 void manualGrindingLoop();
+
+RotaryEncoder::Direction readEncoderRotation();
 
 void switchToBufferRenderFrame();
 void erase();

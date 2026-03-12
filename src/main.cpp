@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <avr/sleep.h>
+#include <util/atomic.h>
 
 #define TINY4KOLED_QUICK_BEGIN  // White OLED
 #if defined(__AVR_ATtiny85__)
@@ -142,7 +143,7 @@ void loop() {
     oled.clear();  // TODO: Get rid of
     
     // Reset any button- and/or interrupt-triggered events during grinding
-    encoder.getDirection();
+    readEncoderRotation();
     menuButton.read();
 
     // Go back to menu
@@ -165,7 +166,7 @@ void loop() {
 
 void menuLoop() {
   // Handle rotary encoder -> Menu navigation
-  RotaryEncoder::Direction direction = encoder.getDirection();
+  RotaryEncoder::Direction direction = readEncoderRotation();
   if (direction != RotaryEncoder::Direction::NOROTATION) {
     Profiles.changeProfile((int8_t)direction);
     drawMenu();
@@ -225,7 +226,7 @@ void editLoop() {
   }
 
   // Handle rotary encoder -> Change current field value
-  RotaryEncoder::Direction direction = encoder.getDirection();
+  RotaryEncoder::Direction direction = readEncoderRotation();
   if (direction != RotaryEncoder::Direction::NOROTATION) {
     if (state == State::EDIT_PROFILE) {
       Profiles.current->changeType((int8_t)direction);
@@ -241,6 +242,18 @@ void editLoop() {
       renderProfileIcon();
     }
   }
+}
+
+/**
+ * Read encoder rotation atomically because the ISR updates multi-byte position state.
+ * Without this, the main loop can observe a torn encoder value on 8-bit AVR.
+ */
+RotaryEncoder::Direction readEncoderRotation() {
+  RotaryEncoder::Direction direction;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    direction = encoder.getDirection();
+  }
+  return direction;
 }
 
 void switchToBufferRenderFrame() {
